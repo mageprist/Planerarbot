@@ -19,7 +19,7 @@ dagar = ["Söndag", "Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag
 emoji_yes = '☑️'
 emoji_no = '❌'
 
-msg_set = set()
+msg_set = list()
 
 def send_date(days):
     date = datetime.date.today() + datetime.timedelta(days)
@@ -33,12 +33,13 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    if message.content == 'abrakadabra!':
-        for x in range(1, 8):
-            await message.channel.send(send_date(x))
-            msg_set.add(message.channel.last_message_id) # tar id från meddelandet
-            await message.add_reaction(emoji_yes) #lägger till reaktionerna ja och nej
-            await message.add_reaction(emoji_no)
+    if message.content == 'bot':
+        for x in range(1, 3):
+
+            msg_set.append(await message.channel.send(send_date(x))) # skickar meddelandet och lägger till det i listan msg_set
+            print(msg_set)
+            await msg_set[-1].add_reaction(emoji_yes) #lägger till reaktionerna ja och nej på den sist sända meddelandet
+            await msg_set[-1].add_reaction(emoji_no)
 
 @commands.Cog.listener()
 async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
