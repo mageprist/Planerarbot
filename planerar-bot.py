@@ -4,8 +4,10 @@ import os
 import random
 import discord
 import datetime
+from discord.ext import commands
 
-TOKEN = 'ODE3MTQ0NjE1NTE3NTUyNjQx.YEFPOg.qy2oHzimBQzqaLEuQIjBRMbnxB8'
+with open('token.txt', 'r') as file: #läser in TOKEN från token.txt (underlättar vid git).
+    TOKEN = file.read()
 
 client = discord.Client()
 
@@ -14,6 +16,17 @@ async def on_ready():
     print(f'{client.user} has connected to Discord!')
 
 dagar = ["Söndag", "Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag"]
+emoji_yes = '☑️'
+emoji_no = '❌'
+
+msg_set = set()
+
+def send_date(days):
+    date = datetime.date.today() + datetime.timedelta(days)
+    veckodag = dagar[int(date.strftime('%w'))]
+    datum = date.strftime('%d')
+    manad = date.strftime('%m')
+    return veckodag + ' ' + datum + '/' + manad
 
 @client.event
 async def on_message(message):
@@ -22,12 +35,18 @@ async def on_message(message):
 
     if message.content == 'abrakadabra!':
         for x in range(1, 8):
-            date = datetime.date.today() + datetime.timedelta(days=x)
-            veckodag = dagar[int(date.strftime("%w"))]
-            datum = date.strftime("%d")
-            manad = date.strftime("%m")
-            response = veckodag + " " + datum + "/" + manad
-            await message.channel.send(response)
-            
+            await message.channel.send(send_date(x))
+            msg_set.add(message.channel.last_message_id) # tar id från meddelandet
+            await message.add_reaction(emoji_yes) #lägger till reaktionerna ja och nej
+            await message.add_reaction(emoji_no)
+
+@commands.Cog.listener()
+async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+    channel = self.bot.get_channel(payload.channel_id)
+    message = await channel.fetch_message(payload.message_id)
+    user = self.bot.get_user(payload.user_id)
+    if not user:
+        user = await self.bot.fetch_user(payload.user_id)
+    await message.remove_reaction(payload.emoji, user)
 
 client.run(TOKEN)
